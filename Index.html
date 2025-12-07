@@ -3,552 +3,241 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Leaderboard - Enhanced</title>
+  <title>Leaderboard – Single Combined Bar (Fixed Buttons)</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-    h2 { margin-bottom: 10px; }
-    .container { background: #fff; padding: 20px; border-radius: 12px; max-width: 1100px; margin: auto; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    label { font-weight: 600; margin-top: 8px; display:block; }
-    input, button, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
-    button { background: #0078ff; color: white; cursor: pointer; border: none; }
-    .controls { display:flex; gap:8px; margin-top:10px; }
-    .small-btn { padding:6px 8px; font-size:13px; width:auto; border-radius:6px; }
-    .table-wrap { overflow-x:auto; margin-top:20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width:900px; }
-    th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
-    th { background: #0078ff; color: white; position: sticky; top:0; z-index:1; }
-    .games-cell { font-size: 14px; color: #222; }
-    .game-line { margin-bottom:6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .game-text { white-space:nowrap; }
-    .meta { color:#666; font-size:13px; margin-right:8px; }
-    .action-btn {
-  padding: 6px 8px;
-  font-size: 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 1px solid #ccc;
-  background: #fff !important; 
-  color: #000 !important;      /* ← FIX: ensures labels are visible */
-}
-
-    .action-btn:hover { box-shadow:0 1px 3px rgba(0,0,0,0.12); }
-    .badge { display:inline-block; padding:6px 8px; border-radius:12px; color:white; font-weight:700; font-size:13px; min-width:72px; text-align:center; }
-    .gold { background: linear-gradient(90deg,#d4af37,#ffdd57); color:#2a2100; }
-    .silver { background: linear-gradient(90deg,#c0c0c0,#efefef); color:#222; }
-    .bronze { background: linear-gradient(90deg,#cd7f32,#e6a57a); color:#2a1600; }
-    .neutral { background:#e0e0e0; color:#333; font-weight:600; }
-    .right { text-align:right; }
-    .muted { color:#666; font-size:13px; }
-    .print-hide { display:inline-block; margin-left:8px; }
-    @media print {
-      body { background: white; padding: 0; }
-      .container { box-shadow:none; border-radius:0; padding:0; max-width:100%; }
-      .no-print { display: none !important; }
-      table { font-size:12pt; }
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #0d1b2a; color: #e0e6ed; }
+    .container{ max-width:1200px; margin:auto; background:#11243a; padding:20px; border-radius:10px; }
+    h2{margin:0 0 12px 0}
+    label{font-size:13px;color:#9aa9bf;display:block;margin-bottom:4px}
+    input,button{padding:8px;border-radius:6px;border:1px solid #25364a;background:#0f1e30;color:#fff;font-size:14px}
+    button{cursor:pointer;margin-right:6px}
+    .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+    table{width:100%;border-collapse:collapse;margin-top:16px}
+    th,td{padding:8px;border-bottom:1px solid #223247}
+    th{background:#23405a;color:white}
+    .badge{padding:6px 10px;border-radius:20px;background:#1b2c44;font-weight:bold}
+    .bar-panel{margin-top:24px;background:#0c1a28;padding:18px;border-radius:10px}
+    .bar-row{display:flex;align-items:center;margin:10px 0}
+    .label{width:160px;font-weight:bold}
+    .bar{height:22px;border-radius:4px;background:linear-gradient(90deg,#4cc9f0,#f72585);} /* combined bar */
+    .game-item{margin-bottom:6px}
+    .edit-btn,.del-btn{padding:4px 8px;font-size:12px;margin-left:6px;border-radius:4px;border:none;color:#0b1220}
+    .edit-btn{background:#ffd97d}
+    .del-btn{background:#ffb4b4}
+    .controls{margin-top:12px}
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h2>Game Score Leaderboard</h2>
+<div class="container">
+  <h2>Leaderboard – Single Combined Bar</h2>
 
-    <div class="form-grid no-print">
-      <div>
-        <label>Team Name:</label>
-        <input type="text" id="teamName" placeholder="Enter team name" />
-      </div>
-
-      <div>
-        <label>Game Name:</label>
-        <input type="text" id="gameName" placeholder="Enter game name (e.g., Puzzle Run)" />
-      </div>
-
-      <div>
-        <label>Game Score (points):</label>
-        <input type="number" id="gameScore" placeholder="Enter score" />
-      </div>
-
-      <div>
-        <label>Time Taken (minutes):</label>
-        <input type="number" id="timeTaken" placeholder="Enter time taken" />
-      </div>
-    </div>
-
-    <div class="controls no-print">
-      <button onclick="addScore()">Add / Update Score</button>
-      <button class="small-btn" onclick="exportCSV()">Export CSV</button>
-      <button class="small-btn" onclick="exportXLSX()">Export Excel (.xlsx)</button>
-      <button class="small-btn" onclick="printScorecard()">Print Scorecard</button>
-      <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
-        <span class="muted">Saved locally</span>
-        <button class="small-btn" onclick="clearAll()">Clear All</button>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:90px">Rank</th>
-            <th>Team</th>
-            <th style="width:120px">Total Score</th>
-            <th style="width:140px">Total Time (min)</th>
-            <th>Games Played</th>
-          </tr>
-        </thead>
-        <tbody id="leaderboardBody"></tbody>
-      </table>
-    </div>
-	<div class="chart-section" style="margin-top:35px;">
-  <h3>Leaderboard Visual Charts</h3>
-
-  <canvas id="scoreChart" style="margin-top:20px; width:100%; max-height:350px;"></canvas>
-  <canvas id="timeChart" style="margin-top:40px; width:100%; max-height:350px;"></canvas>
-</div>
-
+  <div class="form-grid">
+    <div><label for="teamName">Team</label><input id="teamName"></div>
+    <div><label for="gameName">Game</label><input id="gameName"></div>
+    <div><label for="gameScore">Score</label><input id="gameScore" type="number"></div>
+    <div><label for="timeTaken">Time</label><input id="timeTaken" type="number"></div>
   </div>
 
-  <!-- SheetJS for Excel export (from CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <div class="controls">
+    <button id="btnAdd">Add / Update</button>
+    <button id="btnCSV">Export CSV</button>
+    <button id="btnXLSX">Export Excel (.xlsx)</button>
+  </div>
 
-  <script>
-    // Keep original logic shape but extend structure
-    let teams = {};
+  <table>
+    <thead>
+      <tr><th>Rank</th><th>Team</th><th>Total Score</th><th>Total Time</th><th>Games</th></tr>
+    </thead>
+    <tbody id="leaderboardBody"></tbody>
+  </table>
 
-    function addScore() {
-      const name = document.getElementById('teamName').value.trim();
-      const game = document.getElementById('gameName').value.trim();
-      const scoreVal = document.getElementById('gameScore').value;
-      const timeVal = document.getElementById('timeTaken').value;
+  <div class="bar-panel" id="barsPanel">
+    <h3>Combined Score & Time Bar</h3>
+    <div id="barsContainer"></div>
+  </div>
+</div>
 
-      const score = parseInt(scoreVal, 10);
-      const time = parseInt(timeVal, 10);
+<script>
+// Data model
+let teams = {};
+const STORAGE_KEY = 'leaderboard_clusterbars_v1_fixed_buttons';
 
-      if (!name || !game || isNaN(score) || isNaN(time)) {
-        alert('Please fill all fields correctly.');
-        return;
-      }
+// DOM refs
+const teamName = document.getElementById('teamName');
+const gameName = document.getElementById('gameName');
+const gameScore = document.getElementById('gameScore');
+const timeTaken = document.getElementById('timeTaken');
+const leaderboardBody = document.getElementById('leaderboardBody');
+const barsContainer = document.getElementById('barsContainer');
+const btnAdd = document.getElementById('btnAdd');
+const btnCSV = document.getElementById('btnCSV');
+const btnXLSX = document.getElementById('btnXLSX');
 
-      if (!teams[name]) {
-        teams[name] = { totalScore: 0, totalTime: 0, games: [] };
-      }
+// Events
+btnAdd.addEventListener('click', addScore);
+btnCSV.addEventListener('click', exportCSV);
+btnXLSX.addEventListener('click', exportXLSX);
 
-      teams[name].games.push({ game, score, time });
+// Functions
+function addScore(){
+  const name = teamName.value.trim();
+  const game = gameName.value.trim();
+  const s = parseInt(gameScore.value, 10);
+  const t = parseInt(timeTaken.value, 10);
+  if(!name || !game || Number.isNaN(s) || Number.isNaN(t)){
+    alert('Please fill all fields correctly');
+    return;
+  }
+  if(!teams[name]) teams[name] = { totalScore:0, totalTime:0, games:[] };
+  teams[name].games.push({ game, score: s, time: t });
+  teams[name].totalScore += s;
+  teams[name].totalTime += t;
+  save(); render();
+  gameName.value = ''; gameScore.value = ''; timeTaken.value = '';
+}
 
-      teams[name].totalScore += score;
-      teams[name].totalTime += time;
+function render(){
+  const data = Object.entries(teams).map(([k,v])=>({name:k,...v}))
+    .sort((a,b)=> b.totalScore - a.totalScore || a.totalTime - b.totalTime);
 
-      renderLeaderboard();
-      saveData();
+  leaderboardBody.innerHTML = '';
+  data.forEach((t, i) => {
+    const gamesHtml = t.games.map((g, idx) => {
+      // use data attributes for safer handling
+      return `<div class='game-item' data-team='${escapeHtml(t.name)}' data-index='${idx}'>
+        • <b>${escapeHtml(g.game)}</b>: ${g.score} pts, ${g.time} min
+        <button class='edit-btn' data-team='${escapeHtml(t.name)}' data-index='${idx}'>Edit</button>
+        <button class='del-btn' data-team='${escapeHtml(t.name)}' data-index='${idx}'>Delete</button>
+      </div>`;
+    }).join('');
 
-      // clear some inputs for convenience
-      document.getElementById('gameName').value = '';
-      document.getElementById('gameScore').value = '';
-      document.getElementById('timeTaken').value = '';
-    }
-
-    function renderLeaderboard() {
-      const leaderboard = Object.entries(teams)
-        .map(([name, data]) => ({ name, ...data }))
-        .sort((a, b) => {
-          if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
-          return a.totalTime - b.totalTime;
-        });
-
-      const tbody = document.getElementById('leaderboardBody');
-      tbody.innerHTML = '';
-
-      leaderboard.forEach((team, index) => {
-        // badge for rank
-        let badgeClass = 'neutral';
-        let badgeText = `#${index + 1}`;
-        if (index === 0) { badgeClass = 'gold'; badgeText = '1 — Gold'; }
-        else if (index === 1) { badgeClass = 'silver'; badgeText = '2 — Silver'; }
-        else if (index === 2) { badgeClass = 'bronze'; badgeText = '3 — Bronze'; }
-
-        // Games list with inline Edit/Delete controls (Option A)
-        const gamesHtml = team.games.map((g, gi) => {
-          // each line has a wrapper with data attributes for easy DOM targeting
-          return `
-            <div class="game-line" data-team="${escapeHtml(team.name)}" data-index="${gi}">
-              <span class="meta">•</span>
-              <span class="game-text" id="text-${escapeId(team.name)}-${gi}">
-                <strong>${escapeHtml(g.game)}</strong>: ${g.score} pts, ${g.time} min
-              </span>
-
-              <button class="action-btn" onclick="startEditGame('${escapeJs(team.name)}', ${gi})">Edit</button>
-              <button class="action-btn" onclick="deleteGame('${escapeJs(team.name)}', ${gi})">Delete</button>
-            </div>
-          `;
-		  }).join('');
-
-        tbody.innerHTML += `
-          <tr>
-            <td><span class="badge ${badgeClass}">${badgeText}</span></td>
-            <td>${escapeHtml(team.name)}</td>
-            <td class="right">${team.totalScore}</td>
-            <td class="right">${team.totalTime}</td>
-            <td class="games-cell" id="games-${escapeId(team.name)}">${gamesHtml}</td>
-          </tr>
-        `;
-      });updateCharts();
-    }
-
-    // Inline edit: replace the game text with inputs & save/cancel buttons
-    function startEditGame(teamName, gameIndex) {
-      const team = teams[teamName];
-      if (!team) return;
-
-      const g = team.games[gameIndex];
-      const textId = `text-${escapeId(teamName)}-${gameIndex}`;
-      const textEl = document.getElementById(textId);
-      if (!textEl) return;
-
-      // build edit UI
-      const container = textEl.parentElement; // .game-line
-      const editHtml = `
-        <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input id="edit-game-${escapeId(teamName)}-${gameIndex}" value="${escapeAttr(g.game)}" style="padding:6px;border-radius:6px;border:1px solid #ccc;" />
-          <input type="number" id="edit-score-${escapeId(teamName)}-${gameIndex}" value="${g.score}" style="width:90px;padding:6px;border-radius:6px;border:1px solid #ccc;" />
-          <input type="number" id="edit-time-${escapeId(teamName)}-${gameIndex}" value="${g.time}" style="width:110px;padding:6px;border-radius:6px;border:1px solid #ccc;" />
-          <button class="action-btn" onclick="saveEditGame('${escapeJs(teamName)}', ${gameIndex})">Save</button>
-          <button class="action-btn" onclick="cancelEditGame('${escapeJs(teamName)}', ${gameIndex})">Cancel</button>
-        </span>
-      `;
-
-      // hide static text and append edit UI
-      textEl.style.display = 'none';
-      // append a new span for edit UI (so original text preserved for cancel)
-      let editSpan = container.querySelector('.edit-span');
-      if (!editSpan) {
-        editSpan = document.createElement('span');
-        editSpan.className = 'edit-span';
-        container.appendChild(editSpan);
-      }
-      editSpan.innerHTML = editHtml;
-    }
-
-    function saveEditGame(teamName, gameIndex) {
-      const team = teams[teamName];
-      if (!team) return;
-
-      const gameInput = document.getElementById(`edit-game-${escapeId(teamName)}-${gameIndex}`);
-      const scoreInput = document.getElementById(`edit-score-${escapeId(teamName)}-${gameIndex}`);
-      const timeInput = document.getElementById(`edit-time-${escapeId(teamName)}-${gameIndex}`);
-
-      if (!gameInput || !scoreInput || !timeInput) return;
-
-      const newGameName = gameInput.value.trim();
-      const newScore = parseInt(scoreInput.value, 10);
-      const newTime = parseInt(timeInput.value, 10);
-
-      if (!newGameName || isNaN(newScore) || isNaN(newTime)) {
-        alert('Please provide valid game name, score and time.');
-        return;
-      }
-
-      // adjust totals (remove old values, add new)
-      const old = team.games[gameIndex];
-      team.totalScore = team.totalScore - old.score + newScore;
-      team.totalTime = team.totalTime - old.time + newTime;
-
-      // update game record
-      team.games[gameIndex] = { game: newGameName, score: newScore, time: newTime };
-
-      // cleanup edit UI
-      cancelEditGame(teamName, gameIndex, true);
-
-      renderLeaderboard();
-      saveData();
-    }
-
-    // Cancel: remove edit UI and show original text (original saved earlier in DOM)
-    function cancelEditGame(teamName, gameIndex, hideOriginal) {
-      const textId = `text-${escapeId(teamName)}-${gameIndex}`;
-      const textEl = document.getElementById(textId);
-      if (!textEl) return;
-      // remove edit-span if exists
-      const container = textEl.parentElement;
-      const editSpan = container.querySelector('.edit-span');
-      if (editSpan) editSpan.remove();
-
-      // show static text (update it if hideOriginal === true: full refresh will handle)
-      textEl.style.display = hideOriginal ? 'none' : 'inline';
-      if (hideOriginal) {
-        // simply re-render to reflect changes
-        renderLeaderboard();
-      }
-    }
-
-    function deleteGame(teamName, gameIndex) {
-      if (!confirm('Delete this game entry?')) return;
-
-      const team = teams[teamName];
-      if (!team) return;
-
-      const removed = team.games.splice(gameIndex, 1)[0];
-      if (removed) {
-        team.totalScore -= removed.score;
-        team.totalTime -= removed.time;
-      }
-
-      // If no games left for team, delete team entirely
-      if (team.games.length === 0) {
-        delete teams[teamName];
-      }
-
-      renderLeaderboard();
-      saveData();
-    }
-
-    // CSV export (keeps old behavior but includes games breakdown)
-    function exportCSV() {
-      let csv = 'Rank,Team,Total Score,Total Time (min),Games Breakdown\n';
-      const leaderboard = Object.entries(teams)
-        .map(([name, data]) => ({ name, ...data }))
-        .sort((a, b) => (b.totalScore !== a.totalScore ? b.totalScore - a.totalScore : a.totalTime - b.totalTime));
-
-      leaderboard.forEach((t, i) => {
-        const games = t.games.map(g => `${g.game} (${g.score}pts, ${g.time}min)`).join(' | ');
-        csv += `${i + 1},"${t.name}",${t.totalScore},${t.totalTime},"${games.replace(/"/g, '""')}"\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'leaderboard.csv';
-      link.click();
-    }
-
-    // Excel export using SheetJS
-    function exportXLSX() {
-      try {
-        const leaderboard = Object.entries(teams)
-          .map(([name, data]) => ({ name, ...data }))
-          .sort((a, b) => (b.totalScore !== a.totalScore ? b.totalScore - a.totalScore : a.totalTime - b.totalTime));
-
-        const rows = [];
-        rows.push(['Rank', 'Team', 'Total Score', 'Total Time (min)', 'Game Name', 'Game Score', 'Game Time (min)']);
-
-        leaderboard.forEach((t, i) => {
-          if (t.games.length === 0) {
-            rows.push([i + 1, t.name, t.totalScore, t.totalTime, '', '', '']);
-          } else {
-            t.games.forEach((g, gi) => {
-              rows.push([i + 1, t.name, t.totalScore, t.totalTime, g.game, g.score, g.time]);
-            });
-          }
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Leaderboard');
-        XLSX.writeFile(wb, 'leaderboard.xlsx');
-      } catch (err) {
-        console.error(err);
-        alert('Excel export failed. Check console for details.');
-      }
-    }
-
-    // Print-friendly view: open new window and print
-    function printScorecard() {
-      const leaderboard = Object.entries(teams)
-        .map(([name, data]) => ({ name, ...data }))
-        .sort((a, b) => (b.totalScore !== a.totalScore ? b.totalScore - a.totalScore : a.totalTime - b.totalTime));
-
-      let html = `
-        <html>
-          <head>
-            <title>Printable Scorecard</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 24px; color:#111; }
-              h1 { text-align:center; margin-bottom:8px; }
-              table { width:100%; border-collapse:collapse; margin-top:12px; }
-              th, td { padding:8px; border:1px solid #ddd; text-align:left; }
-              th { background:#0078ff; color:#fff; }
-              .badge { display:inline-block; padding:4px 8px; border-radius:8px; color:white; font-weight:700; }
-              .gold { background:#d4af37; color:#2a2100; }
-              .silver { background:#c0c0c0; color:#222; }
-              .bronze { background:#cd7f32; color:#2a1600; }
-              .neutral { background:#888; color:#fff; }
-              .games { font-size:13px; color:#222; }
-            </style>
-          </head>
-          <body>
-            <h1>Scorecard</h1>
-            <table>
-              <thead>
-                <tr><th style="width:70px">Rank</th><th>Team</th><th style="width:120px">Total Score</th><th style="width:140px">Total Time (min)</th><th>Games</th></tr>
-              </thead>
-              <tbody>
-      `;
-
-      leaderboard.forEach((t, i) => {
-        let badgeClass = 'neutral', badgeText = `#${i+1}`;
-        if (i===0) { badgeClass='gold'; badgeText='1 — Gold'; }
-        else if (i===1) { badgeClass='silver'; badgeText='2 — Silver'; }
-        else if (i===2) { badgeClass='bronze'; badgeText='3 — Bronze'; }
-
-        const gamesHtml = t.games.map(g => `<div class="games">• ${escapeHtml(g.game)}: ${g.score} pts, ${g.time} min</div>`).join('');
-        html += `<tr>
-          <td><span class="badge ${badgeClass}">${badgeText}</span></td>
-          <td>${escapeHtml(t.name)}</td>
-          <td>${t.totalScore}</td>
-          <td>${t.totalTime}</td>
-          <td>${gamesHtml}</td>
-        </tr>`;
-      });
-
-      html += `
-              </tbody>
-            </table>
-          </body>
-        </html>
-      `;
-
-      const w = window.open('', '_blank', 'noopener');
-      if (!w) {
-        alert('Popup blocked. Please allow popups for print.');
-        return;
-      }
-      w.document.write(html);
-      w.document.close();
-      // small delay to ensure rendering, then print
-      setTimeout(() => { w.print(); }, 300);
-    }
-
-    // Save/load
-    function saveData() {
-      localStorage.setItem('leaderboardData_enhanced_v1', JSON.stringify(teams));
-    }
-
-    window.onload = function () {
-      const saved = localStorage.getItem('leaderboardData_enhanced_v1');
-      if (saved) {
-        try {
-          teams = JSON.parse(saved);
-        } catch (e) {
-          teams = {};
-        }
-        renderLeaderboard();
-      }
-    };
-
-    // Clear all data
-    function clearAll() {
-      if (!confirm('Clear all leaderboard data? This cannot be undone.')) return;
-      teams = {};
-      localStorage.removeItem('leaderboardData_enhanced_v1');
-      renderLeaderboard();
-    }
-/* -----------------------
-   Visual Charts for Leaderboard
------------------------ */
-
-let scoreChartInstance = null;
-let timeChartInstance = null;
-
-function updateCharts() {
-  const names = [];
-  const scores = [];
-  const times = [];
-
-  Object.entries(teams)
-    .sort((a, b) => b[1].totalScore - a[1].totalScore)
-    .forEach(([name, data]) => {
-      names.push(name);
-      scores.push(data.totalScore);
-      times.push(data.totalTime);
-    });
-
-  // Destroy old charts
-  if (scoreChartInstance) scoreChartInstance.destroy();
-  if (timeChartInstance) timeChartInstance.destroy();
-
-  const colorPalette = [
-    "#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0",
-    "#9966ff", "#ff9f40", "#66ff66", "#ff6699"
-  ];
-
-  // SCORE BAR CHART
-  scoreChartInstance = new Chart(document.getElementById("scoreChart"), {
-    type: "bar",
-    data: {
-      labels: names,
-      datasets: [{
-        label: "Total Score",
-        data: scores,
-        backgroundColor: colorPalette,
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: "Total Scores by Team",
-          font: { size: 18 }
-        }
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><span class="badge">${i+1} Position</span></td>
+      <td>${escapeHtml(t.name)}</td>
+      <td>${t.totalScore}</td>
+      <td>${t.totalTime}</td>
+      <td>${gamesHtml}</td>`;
+    leaderboardBody.appendChild(row);
   });
 
-  // TIME BAR CHART
-  timeChartInstance = new Chart(document.getElementById("timeChart"), {
-    type: "bar",
-    data: {
-      labels: names,
-      datasets: [{
-        label: "Total Time (Minutes)",
-        data: times,
-        backgroundColor: colorPalette,
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: "Total Time by Team",
-          font: { size: 18 }
-        }
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
+  // attach event handlers for edit/delete (event delegation alternative)
+  Array.from(document.getElementsByClassName('edit-btn')).forEach(btn=>{
+    btn.removeEventListener('click', onEditClick);
+    btn.addEventListener('click', onEditClick);
+  });
+  Array.from(document.getElementsByClassName('del-btn')).forEach(btn=>{
+    btn.removeEventListener('click', onDeleteClick);
+    btn.addEventListener('click', onDeleteClick);
+  });
+
+  renderBars(data);
+}
+
+function onEditClick(e){
+  const team = e.currentTarget.getAttribute('data-team');
+  const idx = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+  editGame(team, idx);
+}
+function onDeleteClick(e){
+  const team = e.currentTarget.getAttribute('data-team');
+  const idx = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+  deleteGame(team, idx);
+}
+
+function editGame(team, i){
+  const g = teams[team].games[i];
+  const ns = prompt('Score', g.score);
+  const nt = prompt('Time', g.time);
+  if(ns === null || nt === null) return;
+  const nsNum = parseInt(ns, 10); const ntNum = parseInt(nt, 10);
+  if(Number.isNaN(nsNum) || Number.isNaN(ntNum)) { alert('Invalid numbers'); return; }
+  teams[team].totalScore -= g.score;
+  teams[team].totalTime -= g.time;
+  g.score = nsNum; g.time = ntNum;
+  teams[team].totalScore += g.score;
+  teams[team].totalTime += g.time;
+  save(); render();
+}
+
+function deleteGame(team, i){
+  if(!confirm('Delete this game entry?')) return;
+  const g = teams[team].games[i];
+  teams[team].totalScore -= g.score;
+  teams[team].totalTime -= g.time;
+  teams[team].games.splice(i,1);
+  // if no games left, remove team entirely
+  if(teams[team].games.length === 0) delete teams[team];
+  save(); render();
+}
+
+/* Combined bar = average of normalized score and time */
+function renderBars(list){
+  barsContainer.innerHTML = '';
+  if(list.length === 0) return;
+  const maxScore = Math.max(...list.map(t=>t.totalScore), 1);
+  const maxTime = Math.max(...list.map(t=>t.totalTime), 1);
+
+  list.forEach(t => {
+    const sNorm = t.totalScore / maxScore;
+    const tNorm = t.totalTime / maxTime;
+    const combined = Math.round(((sNorm + tNorm) / 2) * 70); // percent
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'bar-row';
+    wrapper.innerHTML = `<div class='label'>${escapeHtml(t.name)}</div>`;
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.width = combined + '%';
+    bar.title = `Score ${t.totalScore}, Time ${t.totalTime}`;
+    wrapper.appendChild(bar);
+    barsContainer.appendChild(wrapper);
   });
 }
 
-    /* -----------------------
-       Utility helpers (escaping IDs & HTML)
-       ----------------------- */
-    function escapeId(s) {
-      return String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
-    }
-    function escapeHtml(s) {
-      if (s === undefined || s === null) return '';
-      return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
-    function escapeAttr(s) {
-      return escapeHtml(s).replace(/"/g, '&quot;');
-    }
-    // For embedding into JS string literals inside onclick - keep quotes safe
-    function escapeJs(s) {
-      return String(s).replace(/'/g, "\\'");
-    }
-  </script>
+// Exports
+function exportCSV(){
+  let csv = 'Rank,Team,Total Score,Total Time,Game,Score,Time\n';
+  const data = Object.entries(teams).map(([k,v])=>({name:k,...v}))
+    .sort((a,b)=> b.totalScore - a.totalScore || a.totalTime - b.totalTime);
+  data.forEach((t,i)=>{
+    if(!t.games || t.games.length === 0) csv += `${i+1},"${t.name}",${t.totalScore},${t.totalTime},,,\n`;
+    else t.games.forEach(g=> csv += `${i+1},"${t.name}",${t.totalScore},${t.totalTime},"${g.game}",${g.score},${g.time}\n`);
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'leaderboard.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function exportXLSX(){
+  const wb = XLSX.utils.book_new();
+  const sheet = [];
+  sheet.push(["Rank","Team","Total Score","Total Time","Game","Score","Time"]);
+  const data = Object.entries(teams).map(([k,v])=>({name:k,...v}))
+    .sort((a,b)=> b.totalScore - a.totalScore || a.totalTime - b.totalTime);
+  data.forEach((t,i)=>{
+    if(!t.games || t.games.length === 0) sheet.push([i+1,t.name,t.totalScore,t.totalTime,'','', '']);
+    else t.games.forEach(g=> sheet.push([i+1,t.name,t.totalScore,t.totalTime,g.game,g.score,g.time]));
+  });
+  const ws = XLSX.utils.aoa_to_sheet(sheet);
+  XLSX.utils.book_append_sheet(wb, ws, 'Leaderboard');
+  XLSX.writeFile(wb, 'leaderboard.xlsx');
+}
+
+// Persistence
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(teams)); }
+function load(){ const d = localStorage.getItem(STORAGE_KEY); if(d) teams = JSON.parse(d); }
+
+// Utilities
+function escapeHtml(s){ if(s===undefined||s===null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// Init
+load(); render();
+</script>
 </body>
 </html>
