@@ -177,18 +177,23 @@ function deleteGame(team, i){
 function renderBars(list){
   barsContainer.innerHTML = '';
   if(list.length === 0) return;
-  const maxScore = Math.max(...list.map(t=>t.totalScore), 1);
-  const maxTime = Math.max(...list.map(t=>t.totalTime), 1);
+
+  // Max score only (time is NOT used for bar size)
+  const maxScore = Math.max(...list.map(t => t.totalScore), 1);
+
+  // Prepare ranking
   const rankedList = list.map((t, i) => ({ ...t, rank: i + 1 }));
 
   rankedList.forEach(t => {
+
+    // Bar width based ONLY on total score
     const sNorm = t.totalScore / maxScore;
-    const tNorm = t.totalTime / maxTime;
-    const combined = Math.round(((sNorm + tNorm) / 2) * 70); // percent
+    const scoreWidth = Math.round(sNorm * 70); // bar width %
 
     const wrapper = document.createElement('div');
     wrapper.className = 'bar-row';
 
+    // Label shows both Score and Time
     wrapper.innerHTML = `
       <div class='label'>
         #${t.rank} – ${escapeHtml(t.name)}<br>
@@ -198,14 +203,14 @@ function renderBars(list){
 
     const bar = document.createElement('div');
     bar.className = 'bar';
-    bar.style.width = combined + '%';
+    bar.style.width = scoreWidth + '%';   // only score affects bar
     bar.title = `Score ${t.totalScore}, Time ${t.totalTime}`;
 
     wrapper.appendChild(bar);
     barsContainer.appendChild(wrapper);
-});
-
+  });
 }
+
 
 // Exports
 function exportCSV(){
