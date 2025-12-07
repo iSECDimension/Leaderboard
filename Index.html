@@ -43,6 +43,7 @@
     <button id="btnAdd">Add / Update</button>
     <button id="btnCSV">Export CSV</button>
     <button id="btnXLSX">Export Excel (.xlsx)</button>
+	<button id="btnSummary">Summary for Email</button>
   </div>
 
   <table>
@@ -238,6 +239,30 @@ function escapeHtml(s){ if(s===undefined||s===null) return ''; return String(s).
 
 // Init
 load(); render();
+btnSummary.addEventListener('click', summaryEmail);
+
+function summaryEmail(){
+  const data = Object.entries(teams).map(([k,v])=>({name:k,...v}))
+    .sort((a,b)=> b.totalScore - a.totalScore || a.totalTime - b.totalTime);
+
+  if(data.length === 0){ alert('No teams to summarize'); return; }
+
+  let text = '🏆 Leaderboard Summary (Copy & Paste into Email)\n\n';
+
+  data.forEach((t,i)=>{
+    text += `⭐ ${i+1}. ${t.name}\n`;
+    text += `   🎯 Total Score: ${t.totalScore}\n`;
+    text += `   ⏱️ Total Time: ${t.totalTime} min\n`;
+    text += `   🎮 Games:\n`;
+    t.games.forEach(g=>{
+      text += `     • ${g.game} – ${g.score} pts, ${g.time} min\n`;
+    });
+    text += '\n';
+  });
+
+  alert(text);
+}
+
 </script>
 </body>
 </html>
