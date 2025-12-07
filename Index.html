@@ -179,22 +179,32 @@ function renderBars(list){
   if(list.length === 0) return;
   const maxScore = Math.max(...list.map(t=>t.totalScore), 1);
   const maxTime = Math.max(...list.map(t=>t.totalTime), 1);
+  const rankedList = list.map((t, i) => ({ ...t, rank: i + 1 }));
 
-  list.forEach(t => {
+  rankedList.forEach(t => {
     const sNorm = t.totalScore / maxScore;
     const tNorm = t.totalTime / maxTime;
     const combined = Math.round(((sNorm + tNorm) / 2) * 70); // percent
 
     const wrapper = document.createElement('div');
     wrapper.className = 'bar-row';
-    wrapper.innerHTML = `<div class='label'>${escapeHtml(t.name)}</div>`;
+
+    wrapper.innerHTML = `
+      <div class='label'>
+        #${t.rank} – ${escapeHtml(t.name)}<br>
+        <small>Score: ${t.totalScore} | Time: ${t.totalTime}</small>
+      </div>
+    `;
+
     const bar = document.createElement('div');
     bar.className = 'bar';
     bar.style.width = combined + '%';
     bar.title = `Score ${t.totalScore}, Time ${t.totalTime}`;
+
     wrapper.appendChild(bar);
     barsContainer.appendChild(wrapper);
-  });
+});
+
 }
 
 // Exports
